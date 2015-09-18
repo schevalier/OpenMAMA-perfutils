@@ -1,4 +1,5 @@
 import numpy as np
+import re
 from matplotlib import cm
 from sys import exit
 from collectlParserlib import get_collectl_proc_data, find_start_time, offset_all_seconds_since_epoch_timestamps, get_collectl_CPU_data, get_collectl_network_data
@@ -1237,7 +1238,7 @@ def process_mamaproducer_logs(file_filt, path):
     print "looking for files containing ",file_filt
     for filename in files:
         if search(file_filt,filename):
-            print "processing "+filename+"..."
+            print "Processing mamaproducer log "+filename+"..."
             data[filename]={}
             for header in wanted_headers:
                 data[filename][header]=[[],[]]
@@ -1263,22 +1264,39 @@ def process_mamaproducer_logs(file_filt, path):
 
 def process_mamaconsumer_logs(file_filt, path, cpufreq):
     data={}
-    wanted_headers=['RATE','TRANS LOW','TRANS AVG','TRANS HIGH','GAPS','MC GAPS','MISSING FIDS']
+    #wanted_headers=['RATE','FH LOW', 'FH AVG', 'FH HIGH', 'TRANS LOW','TRANS AVG','TRANS HIGH','GAPS','MD GAPS','MISSING FIDS']
     files=listdir(path)
     files.sort(reverse=False)
     for file in files:
+        present_headers=[]
         if search(file,file_filt):
             data[file]={}
-            for header in wanted_headers:
-                data[file][header]=[[],[]]
-            print "processing "+file+"..."
+            print "Processing mamaconsumer log "+file+"..."
             rfp=open(path + file,'r')
             line=rfp.readline()
 
             # Skip down to header line
             while len(line)>0:
                 if search ('TIME',line):
+                    root_name = ""
+                    # Replace space columns with underscores and replace surrounding whitespace
+                    line = re.sub(r' (LOW|HIGH|AVG|FIDS)', r'_\1', line.rstrip()).lstrip()
+                    line = line.replace ("MD GAPS", "MD_GAPS")
+                    for col in line.split():
+                        pair = col.split("_")
+                        if len(pair) > 1:
+                            root_name = pair[0]
+                        if "%" in col:
+                            col = root_name + "_" + col
+                        if col != "TIME":
+                            present_headers.append(col)
+                    wanted_headers = present_headers
+
+                    for header in wanted_headers:
+                        data[file][header]=[[],[]]
+
                     break
+
                 line=rfp.readline()
             while len(line)>0:
                 if search(r"[0-9]{4}/[0-9]{2}/[0-9]{2} - [0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}",line):
@@ -1287,11 +1305,15 @@ def process_mamaconsumer_logs(file_filt, path, cpufreq):
                     timestamp=timesplit[1].strip("-")
                     dt=dateutil.parser.parse(timestamp)
                     seconds_since_epoch=time.mktime(dt.timetuple())
-
                     metrics=(timesplit[2].strip("\n")).split()
-                    for i,header in enumerate(wanted_headers):
-                        data[file][header][0].append(seconds_since_epoch)
-                        data[file][header][1].append(float(metrics[i])/cpufreq)
+                    for i, header in enumerate(wanted_headers):
+                        #delim_header = header.replace(" ", "_")
+                        delim_header = header
+                        j = present_headers.index(delim_header)
+                        if j < len(metrics):
+                            data[file][header][0].append(seconds_since_epoch)
+                            data[file][header][1].append(metrics[j])
+
                 line=rfp.readline()
     return data
 
@@ -1306,7 +1328,7 @@ def process_netstat_logs(file_filt, path):
             data[filename]={}
             for header in wanted_headers:
                 data[filename][header]=[[],[]]
-            print "processing "+filename+"..."
+            print "Processing netstat log "+filename+"..."
             rfp=open(path + filename,'r')
             #skip header line
             line=rfp.readline()

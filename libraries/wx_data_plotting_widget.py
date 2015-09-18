@@ -102,7 +102,7 @@ class GraphFrame(wx.Frame):
 
         #for each key, i.e. "1. A_CheckListBox", create a checklistbox and corresponding title
         for key in sorted(self.data.keys()):
-            self.checkboxes.append(wx.CheckListBox(self.checkbox_panel, 0, wx.DefaultPosition, (180,110), sorted(self.data[key].keys())))
+            self.checkboxes.append(wx.CheckListBox(self.checkbox_panel, wx.ID_ANY, wx.DefaultPosition, (180,110), sorted(self.data[key].keys())))
             self.checkboxtitles.append(wx.StaticText(self.checkbox_panel, -1, key, style=wx.ALIGN_LEFT))
 
         self.left_panel_main_vbox = wx.BoxSizer(wx.VERTICAL)
@@ -259,6 +259,7 @@ class GraphFrame(wx.Frame):
             #get the sorted keys i.e. "A_CheckListBox_item_1","A_CheckListBox_item_2"
             keys=sorted(self.data[key].keys())
             #for each checked box in each checklistbox
+
             for id in sorted(self.checkboxes[i].Checked):
                 num_plots+=1
                 xdata=self.data[key][keys[id]][0]

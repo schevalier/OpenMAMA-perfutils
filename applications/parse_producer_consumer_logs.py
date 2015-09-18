@@ -68,23 +68,23 @@ if options.conslog is not None:
 
 # Parse collectl logs
 if options.cpulog is not None:
-    print "processing ",options.cpulog," ..."
+    print "Processing cpulog ",options.cpulog," ..."
     data.update(collectlParserlib.get_collectl_plot_data_cpu(options.cpulog,"CPU",""))
 
 if options.netlog is not None:
-    print "processing ",options.netlog," ..."
+    print "Processing netlog ",options.netlog," ..."
     data.update(collectlParserlib.get_collectl_plot_data_process(options.netlog,-1,0,(10*60*60)))
 
 if options.prclog is not None:
-    print "processing ",options.prclog," ..."
+    print "Processing prclog ",options.prclog," ..."
     data.update(collectlParserlib.get_collectl_plot_data_process(options.prclog,-1,0,(10*60*60)))
 
 if options.iblog is not None:
-    print "processing ",options.iblog," ..."
+    print "Processing iblog ",options.iblog," ..."
     data.update(collectlParserlib.get_collectl_plot_data_process(options.iblog,-1,0,(10*60*60)))
 
 if options.memlog is not None:
-    print "processing ",options.memlog," ..."
+    print "Processing memlog ",options.memlog," ..."
     data.update(collectlParserlib.get_collectl_plot_data_process(options.memlog,-1,0,(10*60*60)))
 
 # Parse netstat log
@@ -110,8 +110,6 @@ if options.total and options.publog is not None:
             offset=len(data[key]['RATE'][0]) - min_len
             for i,rate in enumerate(data[key]['RATE'][1]):
                 data['TOTAL_PUBLISHING']['RATE'][1][i-offset] += float(data[key]['RATE'][1][i])
-
-
 
 # Check that there is something to display.
 if len(data.keys())<1:

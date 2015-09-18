@@ -388,7 +388,7 @@ def get_collectl_plot_data_process(collectl_filename,start_time,head,duration):
     parse_collectl_generic_header(collectl_log)
 
     #Get cpu specific header
-    headers=parse_collectl_process_header(collectl_log)
+    headers=parse_collectl_get_header(collectl_log)
 
     #Not used
     #non_numeric_keys=['User','PR','Time','S','AccuTime','Command']
@@ -406,7 +406,6 @@ def get_collectl_plot_data_process(collectl_filename,start_time,head,duration):
     line=collectl_log.readline()
     while len(line)>0 and not re.match('#|Ouch',line):
         dataline=line.split()
-        #print dataline
         seconds_since_epoch=float(dataline[0])
         if start_time==-1:
             start_time=seconds_since_epoch
@@ -444,6 +443,7 @@ def get_collectl_plot_data_process(collectl_filename,start_time,head,duration):
                         process_data[header][command][1].append(int(dataline[i+1][:-1])*scalers[dataline[i+1][-1]])
                     else:
                         process_data[header][command][1].append(int(dataline[i+1]))
+
         line=collectl_log.readline()
     #Cast everything to numpy arrays, assume that there is no need to cast data type
     for key in process_data.keys():
@@ -484,13 +484,10 @@ def parse_collectl_itrs_header(collectl_log):
     return headers, keys
 
 def parse_collectl_cpu_header(collectl_log):
-    headers=collectl_log.readline().split()
-    if headers[0]!='#UTC':
-        print 'Error, collectl log cpu header not recognised'
-        exit()
+    headers = parse_collectl_get_header(collectl_log)
     keys=[]
     cpus=0
-    for header in headers[1:]:
+    for header in headers:
         matches=re.search('\[CPU:([0-9]+)\]([A-Za-z].*)',header).groups()
         keys.append((matches[1],matches[0]))
     return keys
@@ -508,8 +505,7 @@ def parse_collectl_network_header(collectl_log):
         keys.append((matches[1],matches[0]))
     return keys
 
-
-def parse_collectl_process_header(collectl_log):
+def parse_collectl_get_header(collectl_log):
     line=collectl_log.readline()
     while len(line)>0:
         headers=line.split()
@@ -519,11 +515,10 @@ def parse_collectl_process_header(collectl_log):
             for header in headers[1:]:
                 keys.append(header)
             return keys
+        line=collectl_log.readline()
 
     print 'Error, collectl log process header not recognised'
     exit()
-
-
 
 
 
